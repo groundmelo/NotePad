@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NotePad高保真原型</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-theme {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        /* 主容器 */
+        .app-container {
+            max-width: 480px;
+            margin: 0 auto;
+            height: 100vh;
+            background-color: #fff;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        body.dark-theme .app-container {
+            background-color: #1e1e1e;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 页面容器 */
+        .page {
+            display: none;
+            height: 100%;
+            flex-direction: column;
+        }
+
+        .page.active {
+            display: flex;
+        }
+
+        /* 顶部导航栏 */
+        .header {
+            background-color: #6200ee;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        body.dark-theme .header {
+            background-color: #3700b3;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 500;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 16px;
+        }
+
+        .icon-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 8px;
+            border-radius: 50%;
+            transition: background-color 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* 搜索栏 */
+        .search-bar {
+            padding: 16px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        body.dark-theme .search-bar {
+            background-color: #2c2c2c;
+            border-bottom-color: #3e3e3e;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid #e0e0e0;
+            border-radius: 24px;
+            font-size: 16px;
+            background-color: white;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        body.dark-theme .search-input {
+            background-color: #3e3e3e;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        .search-input:focus {
+            border-color: #6200ee;
+            box-shadow: 0 0 0 2px rgba(98, 0, 238, 0.2);
+        }
+
+        /* 笔记列表 */
+        .notes-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .note-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        body.dark-theme .note-item {
+            background-color: #2c2c2c;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .note-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        body.dark-theme .note-item:hover {
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .note-title {
+            font-size: 18px;
+            font-weight: 500;
+            margin-right: 8px;
+        }
+
+        .note-title.completed, .note-preview.completed {
+            text-decoration: line-through;
+            color: #999;
+        }
+
+        body.dark-theme .note-title.completed, 
+        body.dark-theme .note-preview.completed {
+            color: #666;
+        }
+
+        .note-category {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+        }
+
+        .note-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .note-timestamp {
+            font-size: 12px;
+            color: #666;
+        }
+
+        body.dark-theme .note-timestamp {
+            color: #aaa;
+        }
+
+        .note-preview {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        body.dark-theme .note-preview {
+            color: #aaa;
+        }
+
+        /* 待办事项样式 */
+        .todo-checkbox {
+            width: 20px;
+            height: 20px;
+            margin-right: 12px;
+            cursor: pointer;
+        }
+
+        .todo-section {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .todo-content {
+            flex: 1;
+        }
+
+        /* 待办状态切换 */
+        .todo-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        body.dark-theme .todo-toggle {
+            background-color: #2c2c2c;
+            border-bottom-color: #3e3e3e;
+        }
+
+        .todo-toggle label {
+            font-weight: 500;
+        }
+
+        body.dark-theme .todo-toggle label {
+            color: #e0e0e0;
+        }
+
+        /* 浮动操作按钮 */
+        .fab {
+            position: absolute;
+            bottom: 24px;
+            right: 24px;
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            background-color: #6200ee;
+            color: white;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        body.dark-theme .fab {
+            background-color: #3700b3;
+        }
+
+        .fab:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        /* 笔记编辑页面 */
+        .note-editor {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 16px;
+        }
+
+        .editor-title {
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 24px;
+            font-weight: 500;
+            padding: 8px 0;
+            margin-bottom: 16px;
+            background: transparent;
+        }
+
+        body.dark-theme .editor-title {
+            color: #e0e0e0;
+        }
+
+        .editor-content {
+            flex: 1;
+            width: 100%;
+            border: none;
+            outline: none;
+            font-size: 16px;
+            line-height: 1.5;
+            resize: none;
+            background: transparent;
+        }
+
+        body.dark-theme .editor-content {
+            color: #e0e0e0;
+        }
+
+        /* 分类选择器 */
+        .category-selector {
+            padding: 16px;
+            background-color: #f5f5f5;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        body.dark-theme .category-selector {
+            background-color: #2c2c2c;
+            border-bottom-color: #3e3e3e;
+        }
+
+        .category-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        body.dark-theme .category-selector label {
+            color: #e0e0e0;
+        }
+
+        .category-dropdown {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: white;
+            outline: none;
+        }
+
+        body.dark-theme .category-dropdown {
+            background-color: #3e3e3e;
+            border-color: #555;
+            color: #e0e0e0;
+        }
+
+        /* 分类管理页面 */
+        .categories-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+        }
+
+        .category-item {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        body.dark-theme .category-item {
+            background-color: #2c2c2c;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .category-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .category-color {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 2px solid #e0e0e0;
+        }
+
+        .category-name {
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        .category-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .delete-btn {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        /* 侧滑菜单 */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -300px;
+            width: 300px;
+            height: 100vh;
+            background-color: white;
+            box-shadow: 2px 0 4px rgba(0, 0, 0, 0.1);
+            transition: left 0.3s ease;
+            z-index: 1000;
+        }
+
+        body.dark-theme .sidebar {
+            background-color: #1e1e1e;
+        }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+        .sidebar-header {
+            background-color: #6200ee;
+            color: white;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        body.dark-theme .sidebar-header {
+            background-color: #3700b3;
+        }
+
+        .sidebar-content {
+            padding: 16px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 24px;
+        }
+
+        .sidebar-section h3 {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 12px;
+        }
+
+        body.dark-theme .sidebar-section h3 {
+            color: #aaa;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .sidebar-item:hover {
+            background-color: #f5f5f5;
+        }
+
+        body.dark-theme .sidebar-item:hover {
+            background-color: #2c2c2c;
+        }
+
+        .sidebar-item.active {
+            background-color: rgba(98, 0, 238, 0.1);
+            color: #6200ee;
+        }
+
+        body.dark-theme .sidebar-item.active {
+            background-color: rgba(98, 0, 238, 0.2);
+        }
+
+        /* 主题切换开关 */
+        .theme-toggle {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 48px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: #6200ee;
+        }
+
+        input:focus + .toggle-slider {
+            box-shadow: 0 0 1px #6200ee;
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(24px);
+        }
+
+        /* 遮罩层 */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            font-size: 16px;
+            color: #666;
+        }
+
+        body.dark-theme .loading {
+            color: #aaa;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 48px 16px;
+            color: #666;
+        }
+
+        body.dark-theme .empty-state {
+            color: #aaa;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            .app-container {
+                max-width: 100%;
+                height: 100vh;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- 遮罩层 -->
+        <div class="overlay" id="overlay"></div>
+
+        <!-- 侧滑菜单 -->
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>菜单</h2>
+                <button class="icon-btn" id="closeSidebar">×</button>
+            </div>
+            <div class="sidebar-content">
+                <div class="sidebar-section">
+                    <h3>分类筛选</h3>
+                    <div class="sidebar-item active" data-category="all">
+                        <i>📝</i>
+                        <span>全部笔记</span>
+                    </div>
+                    <div class="sidebar-item" data-category="工作">
+                        <i>💼</i>
+                        <span>工作</span>
+                    </div>
+                    <div class="sidebar-item" data-category="学习">
+                        <i>📚</i>
+                        <span>学习</span>
+                    </div>
+                    <div class="sidebar-item" data-category="生活">
+                        <i>🏠</i>
+                        <span>生活</span>
+                    </div>
+                    <div class="sidebar-item" data-category="其他">
+                        <i>🔖</i>
+                        <span>其他</span>
+                    </div>
+                    <div class="sidebar-item" onclick="showCategoriesPage()">
+                        <i>⚙️</i>
+                        <span>管理分类</span>
+                    </div>
+                </div>
+                <div class="sidebar-section">
+                    <h3>设置</h3>
+                    <div class="sidebar-item">
+                        <div class="theme-toggle">
+                            <span>深色主题</span>
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="themeToggle">
+                                <span class="toggle-slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 笔记列表页面 -->
+        <div class="page active" id="notesListPage">
+            <div class="header">
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <button class="icon-btn" id="openSidebar">☰</button>
+                    <h1>笔记</h1>
+                </div>
+                <div class="header-actions">
+                    <button class="icon-btn" id="sortBtn">⇅</button>
+                    <button class="icon-btn" id="searchBtn">🔍</button>
+                </div>
+            </div>
+            
+            <div class="search-bar" id="searchBar" style="display: none;">
+                <input type="text" class="search-input" placeholder="搜索笔记..." id="searchInput">
+            </div>
+            
+            <div class="notes-list" id="notesList">
+                <!-- 笔记列表将通过JavaScript动态生成 -->
+            </div>
+            
+            <button class="fab" id="addNoteBtn">+</button>
+        </div>
+
+        <!-- 笔记编辑页面 -->
+        <div class="page" id="noteEditorPage">
+            <div class="header">
+                <button class="icon-btn" id="backToNotesBtn">←</button>
+                <h1>编辑笔记</h1>
+                <button class="icon-btn" id="saveNoteBtn">💾</button>
+            </div>
+            
+            <div class="category-selector">
+                <label for="noteCategory">分类</label>
+                <select class="category-dropdown" id="noteCategory">
+                    <option value="工作">工作</option>
+                    <option value="学习">学习</option>
+                    <option value="生活">生活</option>
+                    <option value="其他">其他</option>
+                </select>
+            </div>
+            
+            <div class="todo-toggle">
+                <label for="isTodo">待办事项</label>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="isTodo">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            
+            <div class="note-editor">
+                <input type="text" class="editor-title" placeholder="输入标题..." id="noteTitle">
+                <textarea class="editor-content" placeholder="输入内容..." id="noteContent"></textarea>
+            </div>
+        </div>
+
+        <!-- 分类管理页面 -->
+        <div class="page" id="categoriesPage">
+            <div class="header">
+                <button class="icon-btn" id="backToNotesFromCategoriesBtn">←</button>
+                <h1>分类管理</h1>
+                <button class="icon-btn" id="addCategoryBtn">+</button>
+            </div>
+            
+            <div class="categories-list" id="categoriesList">
+                <!-- 分类列表将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 模拟笔记数据
+        let notes = [
+            {
+                id: 1,
+                title: "会议记录",
+                content: "今天的会议讨论了项目的进度和下一步计划，需要完成以下任务：1. 完成需求文档；2. 进行技术选型；3. 制定开发计划。",
+                category: "工作",
+                categoryColor: "#FF5722",
+                timestamp: "2023-10-15 14:30:00",
+                createDate: "2023-10-15 14:30:00",
+                modifiedDate: "2023-10-15 14:30:00",
+                todoStatus: 0 // 普通笔记
+            },
+            {
+                id: 2,
+                title: "学习计划",
+                content: "本周需要学习Android开发的以下内容：1. RecyclerView的高级用法；2. Room数据库；3. Jetpack Compose基础。",
+                category: "学习",
+                categoryColor: "#4CAF50",
+                timestamp: "2023-10-14 09:15:00",
+                createDate: "2023-10-14 09:15:00",
+                modifiedDate: "2023-10-14 09:15:00",
+                todoStatus: 1 // 待办事项（未完成）
+            },
+            {
+                id: 3,
+                title: "购物清单",
+                content: "明天需要购买的物品：1. 牛奶；2. 鸡蛋；3. 蔬菜；4. 水果。",
+                category: "生活",
+                categoryColor: "#2196F3",
+                timestamp: "2023-10-13 18:45:00",
+                createDate: "2023-10-13 18:45:00",
+                modifiedDate: "2023-10-13 18:45:00",
+                todoStatus: 1 // 待办事项（未完成）
+            },
+            {
+                id: 4,
+                title: "灵感记录",
+                content: "突然想到一个好主意，可以开发一个基于AI的笔记应用，能够自动分类和总结笔记内容。",
+                category: "其他",
+                categoryColor: "#9C27B0",
+                timestamp: "2023-10-12 22:10:00",
+                createDate: "2023-10-12 22:10:00",
+                modifiedDate: "2023-10-12 22:10:00",
+                todoStatus: 0 // 普通笔记
+            }
+        ];
+
+        // 模拟分类数据
+        let categories = [
+            { id: 1, name: "工作", color: "#FF5722" },
+            { id: 2, name: "学习", color: "#4CAF50" },
+            { id: 3, name: "生活", color: "#2196F3" },
+            { id: 4, name: "其他", color: "#9C27B0" }
+        ];
+
+        // 当前选中的分类
+        let currentCategory = "all";
+        // 当前搜索关键词
+        let currentSearchKeyword = "";
+        // 当前排序方式
+        let currentSort = "modifiedDate DESC";
+
+        // DOM元素
+        const notesList = document.getElementById('notesList');
+        const searchBar = document.getElementById('searchBar');
+        const searchInput = document.getElementById('searchInput');
+        const addNoteBtn = document.getElementById('addNoteBtn');
+        const backToNotesBtn = document.getElementById('backToNotesBtn');
+        const saveNoteBtn = document.getElementById('saveNoteBtn');
+        const noteTitle = document.getElementById('noteTitle');
+        const noteContent = document.getElementById('noteContent');
+        const noteCategory = document.getElementById('noteCategory');
+        const openSidebar = document.getElementById('openSidebar');
+        const closeSidebar = document.getElementById('closeSidebar');
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        const searchBtn = document.getElementById('searchBtn');
+        const sortBtn = document.getElementById('sortBtn');
+        const themeToggle = document.getElementById('themeToggle');
+        const notesListPage = document.getElementById('notesListPage');
+        const noteEditorPage = document.getElementById('noteEditorPage');
+        const categoriesPage = document.getElementById('categoriesPage');
+        const backToNotesFromCategoriesBtn = document.getElementById('backToNotesFromCategoriesBtn');
+        const categoriesList = document.getElementById('categoriesList');
+        const addCategoryBtn = document.getElementById('addCategoryBtn');
+
+        // 初始化
+        function init() {
+            renderNotes();
+            renderCategories();
+            bindEvents();
+        }
+
+        // 绑定事件
+        function bindEvents() {
+            // 搜索相关事件
+            searchBtn.addEventListener('click', toggleSearch);
+            searchInput.addEventListener('input', handleSearch);
+
+            // 笔记编辑相关事件
+            addNoteBtn.addEventListener('click', showNoteEditor);
+            backToNotesBtn.addEventListener('click', showNotesList);
+            saveNoteBtn.addEventListener('click', saveNote);
+            backToNotesFromCategoriesBtn.addEventListener('click', showNotesList);
+
+            // 侧滑菜单相关事件
+            openSidebar.addEventListener('click', openSidebarMenu);
+            closeSidebar.addEventListener('click', closeSidebarMenu);
+            overlay.addEventListener('click', closeSidebarMenu);
+
+            // 分类筛选事件
+            document.querySelectorAll('.sidebar-item[data-category]').forEach(item => {
+                item.addEventListener('click', handleCategoryFilter);
+            });
+
+            // 主题切换事件
+            themeToggle.addEventListener('change', toggleTheme);
+
+            // 排序事件
+            sortBtn.addEventListener('click', showSortOptions);
+        }
+
+        // 渲染笔记列表
+        function renderNotes() {
+            // 筛选和排序笔记
+            let filteredNotes = notes.filter(note => {
+                const matchesCategory = currentCategory === 'all' || note.category === currentCategory;
+                const matchesSearch = note.title.toLowerCase().includes(currentSearchKeyword.toLowerCase()) ||
+                                     note.content.toLowerCase().includes(currentSearchKeyword.toLowerCase());
+                return matchesCategory && matchesSearch;
+            });
+
+            // 排序
+            filteredNotes.sort((a, b) => {
+                if (currentSort === 'modifiedDate DESC') {
+                    return new Date(b.modifiedDate) - new Date(a.modifiedDate);
+                } else if (currentSort === 'modifiedDate ASC') {
+                    return new Date(a.modifiedDate) - new Date(b.modifiedDate);
+                } else if (currentSort === 'title ASC') {
+                    return a.title.localeCompare(b.title);
+                } else if (currentSort === 'title DESC') {
+                    return b.title.localeCompare(a.title);
+                } else if (currentSort === 'todoStatus') {
+                    // 按待办状态排序：未完成待办 > 普通笔记 > 已完成待办
+                    if (a.todoStatus === 1 && b.todoStatus !== 1) return -1;
+                    if (a.todoStatus !== 1 && b.todoStatus === 1) return 1;
+                    if (a.todoStatus === 0 && b.todoStatus === 2) return -1;
+                    if (a.todoStatus === 2 && b.todoStatus === 0) return 1;
+                    return 0;
+                }
+                return 0;
+            });
+
+            if (filteredNotes.length === 0) {
+                notesList.innerHTML = `
+                    <div class="empty-state">
+                        <i>📭</i>
+                        <h3>没有找到笔记</h3>
+                        <p>尝试调整搜索条件或分类筛选</p>
+                    </div>
+                `;
+                return;
+            }
+
+            notesList.innerHTML = filteredNotes.map(note => {
+                const isTodo = note.todoStatus === 1 || note.todoStatus === 2;
+                const isCompleted = note.todoStatus === 2;
+                return `
+                <div class="note-item">
+                    <div class="todo-section">
+                        ${isTodo ? `
+                            <input type="checkbox" class="todo-checkbox" 
+                                   ${isCompleted ? 'checked' : ''} 
+                                   onclick="toggleTodoStatus(${note.id}, event)">
+                        ` : ''}
+                        <div class="todo-content" onclick="editNote(${note.id})">
+                            <div class="note-header">
+                                <h3 class="note-title ${isCompleted ? 'completed' : ''}">${note.title}</h3>
+                                <span class="note-category" style="background-color: ${note.categoryColor}">${note.category}</span>
+                            </div>
+                            <div class="note-meta">
+                                <span class="note-timestamp">${note.timestamp}</span>
+                            </div>
+                            <div class="note-preview ${isCompleted ? 'completed' : ''}">${note.content}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            }).join('');
+        }
+
+        // 渲染分类列表
+        function renderCategories() {
+            categoriesList.innerHTML = categories.map(category => `
+                <div class="category-item">
+                    <div class="category-info">
+                        <div class="category-color" style="background-color: ${category.color}"></div>
+                        <span class="category-name">${category.name}</span>
+                    </div>
+                    <div class="category-actions">
+                        <button class="icon-btn" onclick="editCategory(${category.id})">✏️</button>
+                        <button class="delete-btn" onclick="deleteCategory(${category.id})">删除</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 切换搜索栏显示
+        function toggleSearch() {
+            searchBar.style.display = searchBar.style.display === 'none' ? 'block' : 'none';
+            if (searchBar.style.display === 'block') {
+                searchInput.focus();
+            }
+        }
+
+        // 处理搜索
+        function handleSearch(e) {
+            currentSearchKeyword = e.target.value;
+            renderNotes();
+        }
+
+        // 显示笔记编辑器
+        function showNoteEditor() {
+            // 清空表单
+            noteTitle.value = '';
+            noteContent.value = '';
+            noteCategory.value = '工作';
+            isTodo.checked = false;
+            
+            // 切换页面
+            notesListPage.classList.remove('active');
+            noteEditorPage.classList.add('active');
+        }
+
+        // 显示笔记列表
+        function showNotesList() {
+            notesListPage.classList.add('active');
+            noteEditorPage.classList.remove('active');
+            categoriesPage.classList.remove('active');
+        }
+
+        // 显示分类管理页面
+        function showCategoriesPage() {
+            notesListPage.classList.remove('active');
+            categoriesPage.classList.add('active');
+            closeSidebarMenu();
+        }
+
+        // 编辑笔记
+        function editNote(id) {
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                noteTitle.value = note.title;
+                noteContent.value = note.content;
+                noteCategory.value = note.category;
+                isTodo.checked = note.todoStatus === 1 || note.todoStatus === 2;
+                
+                notesListPage.classList.remove('active');
+                noteEditorPage.classList.add('active');
+            }
+        }
+
+        // 保存笔记
+        function saveNote() {
+            const title = noteTitle.value.trim();
+            const content = noteContent.value.trim();
+            const category = noteCategory.value;
+            const todoStatus = isTodo.checked ? 1 : 0; // 1: 待办事项（未完成），0: 普通笔记
+            
+            if (title && content) {
+                const timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                const categoryObj = categories.find(c => c.name === category);
+                
+                const newNote = {
+                    id: Date.now(),
+                    title,
+                    content,
+                    category,
+                    categoryColor: categoryObj.color,
+                    timestamp,
+                    createDate: timestamp,
+                    modifiedDate: timestamp,
+                    todoStatus
+                };
+                
+                notes.push(newNote);
+                renderNotes();
+                showNotesList();
+            }
+        }
+
+        // 切换待办状态
+        function toggleTodoStatus(id, event) {
+            // 阻止事件冒泡，避免触发编辑笔记
+            event.stopPropagation();
+            
+            const note = notes.find(n => n.id === id);
+            if (note) {
+                if (note.todoStatus === 1) {
+                    note.todoStatus = 2; // 标记为已完成
+                } else if (note.todoStatus === 2) {
+                    note.todoStatus = 1; // 标记为未完成
+                }
+                // 更新时间戳
+                note.timestamp = new Date().toISOString().slice(0, 19).replace('T', ' ');
+                note.modifiedDate = note.timestamp;
+                renderNotes();
+            }
+        }
+
+        // 打开侧滑菜单
+        function openSidebarMenu() {
+            sidebar.classList.add('open');
+            overlay.classList.add('show');
+        }
+
+        // 关闭侧滑菜单
+        function closeSidebarMenu() {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+        }
+
+        // 处理分类筛选
+        function handleCategoryFilter(e) {
+            // 更新激活状态
+            document.querySelectorAll('.sidebar-item[data-category]').forEach(item => {
+                item.classList.remove('active');
+            });
+            e.target.closest('.sidebar-item').classList.add('active');
+            
+            // 应用筛选
+            currentCategory = e.target.closest('.sidebar-item').dataset.category;
+            renderNotes();
+            closeSidebarMenu();
+        }
+
+        // 主题切换
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+        }
+
+        // 显示排序选项
+        function showSortOptions() {
+            // 这里可以实现一个排序选项菜单，为了简化，我们直接切换排序方式
+            if (currentSort === 'modifiedDate DESC') {
+                currentSort = 'modifiedDate ASC';
+                alert('已切换为按修改时间升序排序');
+            } else if (currentSort === 'modifiedDate ASC') {
+                currentSort = 'title ASC';
+                alert('已切换为按标题升序排序');
+            } else if (currentSort === 'title ASC') {
+                currentSort = 'title DESC';
+                alert('已切换为按标题降序排序');
+            } else {
+                currentSort = 'modifiedDate DESC';
+                alert('已切换为按修改时间降序排序');
+            }
+            renderNotes();
+        }
+
+        // 编辑分类
+        function editCategory(id) {
+            const category = categories.find(c => c.id === id);
+            if (category) {
+                const newName = prompt('请输入新的分类名称:', category.name);
+                if (newName && newName.trim()) {
+                    category.name = newName.trim();
+                    renderCategories();
+                    renderNotes(); // 更新笔记列表中的分类显示
+                }
+            }
+        }
+
+        // 删除分类
+        function deleteCategory(id) {
+            if (confirm('确定要删除这个分类吗？')) {
+                categories = categories.filter(c => c.id !== id);
+                // 将使用该分类的笔记移至"其他"
+                notes.forEach(note => {
+                    const category = categories.find(c => c.name === note.category);
+                    if (!category) {
+                        note.category = '其他';
+                        note.categoryColor = categories.find(c => c.name === '其他').color;
+                    }
+                });
+                renderCategories();
+                renderNotes();
+            }
+        }
+
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
