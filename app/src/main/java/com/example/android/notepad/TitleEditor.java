@@ -21,6 +21,7 @@ import android.content.ContentValues;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 
@@ -65,6 +66,11 @@ public class TitleEditor extends Activity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        // 应用主题
+        ThemeManager.applyTheme(this);
+
+        // 启用ActionBar返回箭头
+        getActionBar().setDisplayHomeAsUpEnabled(true);
 
         // Set the View for this Activity object's UI.
         setContentView(R.layout.title_editor);
@@ -163,5 +169,17 @@ public class TitleEditor extends Activity {
 
     public void onClickOk(View v) {
         finish();
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                // 返回上一级
+                finish();
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
     }
 }

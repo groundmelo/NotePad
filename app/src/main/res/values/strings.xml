@@ -18,16 +18,34 @@
     <string name="app_name">NotePad</string>
     <string name="live_folder_name">Notes</string>
 
+    <string name="menu_help">Help</string>
+    <string name="menu_about">About</string>
     <string name="title_edit_title">Note title:</string>
-    <string name="title_create">New note</string>
+    <string name="title_create">Create note</string>
     <string name="title_edit">Edit: %1$s</string>
     <string name="title_notes_list">Notes</string>
+    <string name="default_category">Other</string>
+    <string name="select_category">Select Category</string>
+    <string name="add_category">Add Category</string>
+    <string name="category_name">Category Name</string>
+    <string name="enter_category_name">Enter category name</string>
+    <string name="select_color">Select Color</string>
+    <string name="category_name_empty">Category name cannot be empty</string>
+    <string name="cancel">Cancel</string>
+    <string name="save">Save</string>
+    <string name="menu_category">Category</string>
+    <string name="all_categories">All Categories</string>
+    <string name="menu_search">搜索</string>
 
     <string name="menu_add">New note</string>
     <string name="menu_save">Save</string>
     <string name="menu_delete">Delete</string>
     <string name="menu_open">Open</string>
     <string name="menu_revert">Revert changes</string>
+    <string name="menu_todo">Todo</string>
+    <string name="menu_todo_mark_pending">Mark as Todo</string>
+    <string name="menu_todo_mark_completed">Mark as Completed</string>
+    <string name="menu_todo_remove">Remove Todo</string>
     <string name="menu_copy">Copy</string>
     <string name="menu_paste">Paste</string>
 
@@ -35,7 +53,7 @@
     <string name="text_title">Title:</string>
 
     <string name="resolve_edit">Edit note</string>
-    <string name="resolve_title">Edit title</string>
+
 
     <string name="error_title">Error</string>
     <string name="error_message">Error loading note</string>

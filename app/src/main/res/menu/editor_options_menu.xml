@@ -1,15 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:id="@+id/menu_save"
-          android:icon="@drawable/ic_menu_save"
+          android:icon="@drawable/ic_save_note"
           android:alphabeticShortcut='s'
           android:title="@string/menu_save"
           android:showAsAction="ifRoom|withText" />
     <item android:id="@+id/menu_revert"
-          android:icon="@drawable/ic_menu_revert"
+          android:icon="@drawable/ic_edit_note"
           android:title="@string/menu_revert" />
     <item android:id="@+id/menu_delete"
-          android:icon="@drawable/ic_menu_delete"
+          android:icon="@drawable/ic_delete_note"
           android:title="@string/menu_delete"
           android:showAsAction="ifRoom|withText" />
+    <item android:id="@+id/menu_font_size"
+          android:title="字体大小"
+          android:showAsAction="never">
+        <menu>
+            <item android:id="@+id/menu_font_size_small"
+                  android:title="小字体" />
+            <item android:id="@+id/menu_font_size_medium"
+                  android:title="中字体" />
+            <item android:id="@+id/menu_font_size_large"
+                  android:title="大字体" />
+            <item android:id="@+id/menu_font_size_xlarge"
+                  android:title="超大字体" />
+        </menu>
+    </item>
 </menu>

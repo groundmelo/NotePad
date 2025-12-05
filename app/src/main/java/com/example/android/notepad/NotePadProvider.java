@@ -63,7 +63,7 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
     /**
      * The database version
      */
-    private static final int DATABASE_VERSION = 2;
+    private static final int DATABASE_VERSION = 4;
 
     /**
      * A projection map used to select columns from the database
@@ -98,6 +98,15 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
 
     // The incoming URI matches the Live Folder URI pattern
     private static final int LIVE_FOLDER_NOTES = 3;
+    
+    // The incoming URI matches the Categories URI pattern
+    private static final int CATEGORIES = 4;
+    
+    // The incoming URI matches the Category ID URI pattern
+    private static final int CATEGORY_ID = 5;
+    
+    // The incoming URI matches the Notes by Category ID URI pattern
+    private static final int NOTES_BY_CATEGORY = 6;
 
     /**
      * A UriMatcher instance
@@ -129,6 +138,16 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         // Add a pattern that routes URIs terminated with live_folders/notes to a
         // live folder operation
         sUriMatcher.addURI(NotePad.AUTHORITY, "live_folders/notes", LIVE_FOLDER_NOTES);
+        
+        // Add a pattern that routes URIs terminated with "categories" to a CATEGORIES operation
+        sUriMatcher.addURI(NotePad.AUTHORITY, "categories", CATEGORIES);
+        
+        // Add a pattern that routes URIs terminated with "categories" plus an integer
+        // to a category ID operation
+        sUriMatcher.addURI(NotePad.AUTHORITY, "categories/#", CATEGORY_ID);
+        
+        // Add a pattern that routes URIs terminated with "notes/category/#" to NOTES_BY_CATEGORY operation
+        sUriMatcher.addURI(NotePad.AUTHORITY, "notes/category/#", NOTES_BY_CATEGORY);
 
         /*
          * Creates and initializes a projection map that returns all columns
@@ -148,13 +167,28 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         sNotesProjectionMap.put(NotePad.Notes.COLUMN_NAME_NOTE, NotePad.Notes.COLUMN_NAME_NOTE);
 
         // Maps "created" to "created"
-        sNotesProjectionMap.put(NotePad.Notes.COLUMN_NAME_CREATE_DATE,
+        sNotesProjectionMap.put(NotePad.Notes.COLUMN_NAME_CREATE_DATE, 
                 NotePad.Notes.COLUMN_NAME_CREATE_DATE);
 
         // Maps "modified" to "modified"
         sNotesProjectionMap.put(
-                NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE,
+                NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, 
                 NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE);
+        
+        // Maps "todo_status" to "todo_status"
+        sNotesProjectionMap.put(
+                NotePad.Notes.COLUMN_NAME_TODO_STATUS, 
+                NotePad.Notes.COLUMN_NAME_TODO_STATUS);
+        
+        // Maps "category" to "category"
+        sNotesProjectionMap.put(
+                NotePad.Notes.COLUMN_NAME_CATEGORY, 
+                NotePad.Notes.COLUMN_NAME_CATEGORY);
+        
+        // Maps "category_color" to "category_color"
+        sNotesProjectionMap.put(
+                NotePad.Notes.COLUMN_NAME_CATEGORY_COLOR, 
+                NotePad.Notes.COLUMN_NAME_CATEGORY_COLOR);
 
         /*
          * Creates an initializes a projection map for handling Live Folders
@@ -191,13 +225,45 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         */
        @Override
        public void onCreate(SQLiteDatabase db) {
-           db.execSQL("CREATE TABLE " + NotePad.Notes.TABLE_NAME + " ("
-                   + NotePad.Notes._ID + " INTEGER PRIMARY KEY,"
-                   + NotePad.Notes.COLUMN_NAME_TITLE + " TEXT,"
-                   + NotePad.Notes.COLUMN_NAME_NOTE + " TEXT,"
-                   + NotePad.Notes.COLUMN_NAME_CREATE_DATE + " INTEGER,"
-                   + NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE + " INTEGER"
+           // 创建笔记表
+           db.execSQL("CREATE TABLE " + NotePad.Notes.TABLE_NAME + " (" 
+                   + NotePad.Notes._ID + " INTEGER PRIMARY KEY," 
+                   + NotePad.Notes.COLUMN_NAME_TITLE + " TEXT," 
+                   + NotePad.Notes.COLUMN_NAME_NOTE + " TEXT," 
+                   + NotePad.Notes.COLUMN_NAME_CREATE_DATE + " INTEGER," 
+                   + NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE + " INTEGER," 
+                   + NotePad.Notes.COLUMN_NAME_TODO_STATUS + " INTEGER DEFAULT 0," 
+                   + NotePad.Notes.COLUMN_NAME_CATEGORY + " TEXT DEFAULT '其他'," 
+                   + NotePad.Notes.COLUMN_NAME_CATEGORY_COLOR + " TEXT DEFAULT '#9E9E9E'" 
                    + ");");
+           
+           // 创建分类表
+           db.execSQL("CREATE TABLE " + NotePad.Categories.TABLE_NAME + " (" 
+                   + NotePad.Categories._ID + " INTEGER PRIMARY KEY," 
+                   + NotePad.Categories.COLUMN_NAME_NAME + " TEXT UNIQUE," 
+                   + NotePad.Categories.COLUMN_NAME_COLOR + " TEXT" 
+                   + ");");
+           
+           // 插入默认分类
+           ContentValues values = new ContentValues();
+           values.put(NotePad.Categories.COLUMN_NAME_NAME, "工作");
+           values.put(NotePad.Categories.COLUMN_NAME_COLOR, "#FF5722");
+           db.insert(NotePad.Categories.TABLE_NAME, null, values);
+           
+           values.clear();
+           values.put(NotePad.Categories.COLUMN_NAME_NAME, "学习");
+           values.put(NotePad.Categories.COLUMN_NAME_COLOR, "#4CAF50");
+           db.insert(NotePad.Categories.TABLE_NAME, null, values);
+           
+           values.clear();
+           values.put(NotePad.Categories.COLUMN_NAME_NAME, "生活");
+           values.put(NotePad.Categories.COLUMN_NAME_COLOR, "#2196F3");
+           db.insert(NotePad.Categories.TABLE_NAME, null, values);
+           
+           values.clear();
+           values.put(NotePad.Categories.COLUMN_NAME_NAME, "其他");
+           values.put(NotePad.Categories.COLUMN_NAME_COLOR, "#9E9E9E");
+           db.insert(NotePad.Categories.TABLE_NAME, null, values);
        }
 
        /**
@@ -208,14 +274,15 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         * A real application should upgrade the database in place.
         */
        @Override
-       public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
 
            // Logs that the database is being upgraded
            Log.w(TAG, "Upgrading database from version " + oldVersion + " to "
                    + newVersion + ", which will destroy all old data");
 
-           // Kills the table and existing data
+           // Kills the tables and existing data
            db.execSQL("DROP TABLE IF EXISTS notes");
+           db.execSQL("DROP TABLE IF EXISTS " + NotePad.Categories.TABLE_NAME);
 
            // Recreates the database with a new version
            onCreate(db);
@@ -252,9 +319,8 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
    public Cursor query(Uri uri, String[] projection, String selection, String[] selectionArgs,
            String sortOrder) {
 
-       // Constructs a new query builder and sets its table name
+       // Constructs a new query builder
        SQLiteQueryBuilder qb = new SQLiteQueryBuilder();
-       qb.setTables(NotePad.Notes.TABLE_NAME);
 
        /**
         * Choose the projection and adjust the "where" clause based on URI pattern-matching.
@@ -262,6 +328,7 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
        switch (sUriMatcher.match(uri)) {
            // If the incoming URI is for notes, chooses the Notes projection
            case NOTES:
+               qb.setTables(NotePad.Notes.TABLE_NAME);
                qb.setProjectionMap(sNotesProjectionMap);
                break;
 
@@ -270,6 +337,7 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
             * it selects that single note
             */
            case NOTE_ID:
+               qb.setTables(NotePad.Notes.TABLE_NAME);
                qb.setProjectionMap(sNotesProjectionMap);
                qb.appendWhere(
                    NotePad.Notes._ID +    // the name of the ID column
@@ -280,7 +348,32 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
 
            case LIVE_FOLDER_NOTES:
                // If the incoming URI is from a live folder, chooses the live folder projection.
+               qb.setTables(NotePad.Notes.TABLE_NAME);
                qb.setProjectionMap(sLiveFolderProjectionMap);
+               break;
+               
+           // If the incoming URI is for categories, chooses the Categories projection
+           case CATEGORIES:
+               qb.setTables(NotePad.Categories.TABLE_NAME);
+               break;
+               
+           // If the incoming URI is for a single category identified by its ID
+           case CATEGORY_ID:
+               qb.setTables(NotePad.Categories.TABLE_NAME);
+               qb.appendWhere(
+                   NotePad.Categories._ID +
+                   "=" +
+                   uri.getPathSegments().get(1)); // category ID is at position 1
+               break;
+               
+           // If the incoming URI is for notes by category ID
+           case NOTES_BY_CATEGORY:
+               qb.setTables(NotePad.Notes.TABLE_NAME + " JOIN " + NotePad.Categories.TABLE_NAME + " ON " + NotePad.Notes.COLUMN_NAME_CATEGORY + " = " + NotePad.Categories.COLUMN_NAME_NAME);
+               qb.setProjectionMap(sNotesProjectionMap);
+               qb.appendWhere(
+                   NotePad.Categories._ID +
+                   "=" +
+                   uri.getPathSegments().get(2)); // category ID is at position 2
                break;
 
            default:
@@ -292,7 +385,11 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
        String orderBy;
        // If no sort order is specified, uses the default
        if (TextUtils.isEmpty(sortOrder)) {
-           orderBy = NotePad.Notes.DEFAULT_SORT_ORDER;
+           if (sUriMatcher.match(uri) == CATEGORIES || sUriMatcher.match(uri) == CATEGORY_ID) {
+               orderBy = NotePad.Categories.DEFAULT_SORT_ORDER;
+           } else {
+               orderBy = NotePad.Notes.DEFAULT_SORT_ORDER;
+           }
        } else {
            // otherwise, uses the incoming sort order
            orderBy = sortOrder;
@@ -341,10 +438,22 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
            case NOTES:
            case LIVE_FOLDER_NOTES:
                return NotePad.Notes.CONTENT_TYPE;
+               
+           // If the pattern is for categories, returns the categories content type
+           case CATEGORIES:
+               return NotePad.Categories.CONTENT_TYPE;
 
            // If the pattern is for note IDs, returns the note ID content type.
            case NOTE_ID:
                return NotePad.Notes.CONTENT_ITEM_TYPE;
+               
+           // If the pattern is for category IDs, returns the category ID content type
+           case CATEGORY_ID:
+               return NotePad.Categories.CONTENT_ITEM_TYPE;
+               
+           // If the pattern is for notes by category ID, returns the notes content type
+           case NOTES_BY_CATEGORY:
+               return NotePad.Notes.CONTENT_TYPE;
 
            // If the URI pattern doesn't match any permitted patterns, throws an exception.
            default:
@@ -498,18 +607,14 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
     @Override
     public Uri insert(Uri uri, ContentValues initialValues) {
 
-        // Validates the incoming URI. Only the full provider URI is allowed for inserts.
-        if (sUriMatcher.match(uri) != NOTES) {
-            throw new IllegalArgumentException("Unknown URI " + uri);
-        }
-
         // A map to hold the new record's values.
         ContentValues values;
+        String table;
+        Uri contentUri;
 
         // If the incoming values map is not null, uses it for the new values.
         if (initialValues != null) {
             values = new ContentValues(initialValues);
-
         } else {
             // Otherwise, create a new value map
             values = new ContentValues();
@@ -518,48 +623,85 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         // Gets the current system time in milliseconds
         Long now = Long.valueOf(System.currentTimeMillis());
 
-        // If the values map doesn't contain the creation date, sets the value to the current time.
-        if (values.containsKey(NotePad.Notes.COLUMN_NAME_CREATE_DATE) == false) {
-            values.put(NotePad.Notes.COLUMN_NAME_CREATE_DATE, now);
-        }
+        switch (sUriMatcher.match(uri)) {
+            case NOTES:
+                // Validates the incoming URI. Only the full provider URI is allowed for inserts.
+                table = NotePad.Notes.TABLE_NAME;
+                contentUri = NotePad.Notes.CONTENT_ID_URI_BASE;
 
-        // If the values map doesn't contain the modification date, sets the value to the current
-        // time.
-        if (values.containsKey(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE) == false) {
-            values.put(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, now);
-        }
+                // If the values map doesn't contain the creation date, sets the value to the current time.
+                if (!values.containsKey(NotePad.Notes.COLUMN_NAME_CREATE_DATE)) {
+                    values.put(NotePad.Notes.COLUMN_NAME_CREATE_DATE, now);
+                }
 
-        // If the values map doesn't contain a title, sets the value to the default title.
-        if (values.containsKey(NotePad.Notes.COLUMN_NAME_TITLE) == false) {
-            Resources r = Resources.getSystem();
-            values.put(NotePad.Notes.COLUMN_NAME_TITLE, r.getString(android.R.string.untitled));
-        }
+                // If the values map doesn't contain the modification date, sets the value to the current time.
+                if (!values.containsKey(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE)) {
+                    values.put(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, now);
+                }
 
-        // If the values map doesn't contain note text, sets the value to an empty string.
-        if (values.containsKey(NotePad.Notes.COLUMN_NAME_NOTE) == false) {
-            values.put(NotePad.Notes.COLUMN_NAME_NOTE, "");
+                // If the values map doesn't contain a title, sets the value to the default title.
+                if (!values.containsKey(NotePad.Notes.COLUMN_NAME_TITLE)) {
+                    Resources r = Resources.getSystem();
+                    values.put(NotePad.Notes.COLUMN_NAME_TITLE, r.getString(android.R.string.untitled));
+                }
+
+                // If the values map doesn't contain note text, sets the value to an empty string.
+                if (!values.containsKey(NotePad.Notes.COLUMN_NAME_NOTE)) {
+                    values.put(NotePad.Notes.COLUMN_NAME_NOTE, "");
+                }
+                
+                // If the values map doesn't contain todo status, sets the value to default (0).
+                if (!values.containsKey(NotePad.Notes.COLUMN_NAME_TODO_STATUS)) {
+                    values.put(NotePad.Notes.COLUMN_NAME_TODO_STATUS, 0);
+                }
+                
+                // If the values map doesn't contain category, set default values
+                if (!values.containsKey(NotePad.Notes.COLUMN_NAME_CATEGORY)) {
+                    values.put(NotePad.Notes.COLUMN_NAME_CATEGORY, "其他");
+                }
+                // 确保分类颜色总是被设置，即使category已经存在
+                if (!values.containsKey(NotePad.Notes.COLUMN_NAME_CATEGORY_COLOR)) {
+                    values.put(NotePad.Notes.COLUMN_NAME_CATEGORY_COLOR, "#9E9E9E");
+                }
+                break;
+                
+            case CATEGORIES:
+            table = NotePad.Categories.TABLE_NAME;
+            contentUri = NotePad.Categories.CONTENT_ID_URI_BASE;
+            
+            // If the values map doesn't contain category name, throw exception
+            if (!values.containsKey(NotePad.Categories.COLUMN_NAME_NAME)) {
+                throw new SQLException("Category name is required");
+            }
+            
+            // If the values map doesn't contain category color, set default
+            if (!values.containsKey(NotePad.Categories.COLUMN_NAME_COLOR)) {
+                values.put(NotePad.Categories.COLUMN_NAME_COLOR, "#9E9E9E");
+            }
+            break;
+                
+            default:
+                throw new IllegalArgumentException("Unknown URI " + uri);
         }
 
         // Opens the database object in "write" mode.
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
 
-        // Performs the insert and returns the ID of the new note.
+        // Performs the insert and returns the ID of the new row.
         long rowId = db.insert(
-            NotePad.Notes.TABLE_NAME,        // The table to insert into.
-            NotePad.Notes.COLUMN_NAME_NOTE,  // A hack, SQLite sets this column value to null
-                                             // if values is empty.
-            values                           // A map of column names, and the values to insert
-                                             // into the columns.
+            table,        // The table to insert into.
+            null,         // No hack needed, null is fine if values is empty
+            values        // A map of column names and values to insert
         );
 
         // If the insert succeeded, the row ID exists.
         if (rowId > 0) {
-            // Creates a URI with the note ID pattern and the new row ID appended to it.
-            Uri noteUri = ContentUris.withAppendedId(NotePad.Notes.CONTENT_ID_URI_BASE, rowId);
+            // Creates a URI with the row ID appended to it.
+            Uri insertedUri = ContentUris.withAppendedId(contentUri, rowId);
 
             // Notifies observers registered against this provider that the data changed.
-            getContext().getContentResolver().notifyChange(noteUri, null);
-            return noteUri;
+            getContext().getContentResolver().notifyChange(insertedUri, null);
+            return insertedUri;
         }
 
         // If the insert didn't succeed, then the rowID is <= 0. Throws an exception.
@@ -585,7 +727,6 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
         // Opens the database object in "write" mode.
         SQLiteDatabase db = mOpenHelper.getWritableDatabase();
         String finalWhere;
-
         int count;
 
         // Does the delete based on the incoming URI pattern.
@@ -628,6 +769,73 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
                     finalWhere,                // The final WHERE clause
                     whereArgs                  // The incoming where clause values.
                 );
+                break;
+                
+            // If the incoming pattern matches the general pattern for categories
+            case CATEGORIES:
+                count = db.delete(
+                    NotePad.Categories.TABLE_NAME,  // The database table name
+                    where,                         // The incoming where clause column names
+                    whereArgs                      // The incoming where clause values
+                );
+                break;
+                
+            // If the incoming URI matches a single category ID
+            case CATEGORY_ID:
+                /*
+                 * Starts a final WHERE clause by restricting it to the desired category ID.
+                 */
+                finalWhere =
+                        NotePad.Categories._ID +      // The ID column name
+                        " = " +                      // test for equality
+                        uri.getPathSegments().get(1)  // the incoming category ID
+                ;
+
+                // If there were additional selection criteria, append them to the final WHERE clause
+                if (where != null) {
+                    finalWhere = finalWhere + " AND " + where;
+                }
+
+                // Get the category name before deleting
+                Cursor cursor = db.query(
+                    NotePad.Categories.TABLE_NAME,
+                    new String[]{NotePad.Categories.COLUMN_NAME_NAME},  // Only need the name
+                    finalWhere,  // WHERE clause to get the category
+                    whereArgs,   // WHERE arguments
+                    null,        // No GROUP BY
+                    null,        // No HAVING
+                    null         // No ORDER BY
+                );
+                
+                String categoryName = null;
+                if (cursor != null && cursor.moveToFirst()) {
+                    categoryName = cursor.getString(0);
+                    cursor.close();
+                }
+                
+                // Performs the delete.
+                count = db.delete(
+                    NotePad.Categories.TABLE_NAME,  // The database table name.
+                    finalWhere,                     // The final WHERE clause
+                    whereArgs                       // The incoming where clause values.
+                );
+                
+                // If category was deleted, update all notes with this category to use "其他"
+                if (count > 0 && categoryName != null) {
+                    ContentValues updateValues = new ContentValues();
+                    updateValues.put(NotePad.Notes.COLUMN_NAME_CATEGORY, "其他");
+                    updateValues.put(NotePad.Notes.COLUMN_NAME_CATEGORY_COLOR, "#9E9E9E");
+                    
+                    db.update(
+                        NotePad.Notes.TABLE_NAME,
+                        updateValues,
+                        NotePad.Notes.COLUMN_NAME_CATEGORY + " = ?",
+                        new String[]{categoryName}
+                    );
+                    
+                    // Notify that notes have changed due to category deletion
+                    getContext().getContentResolver().notifyChange(NotePad.Notes.CONTENT_URI, null);
+                }
                 break;
 
             // If the incoming pattern is invalid, throws an exception.
@@ -679,7 +887,12 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
             // If the incoming URI matches the general notes pattern, does the update based on
             // the incoming data.
             case NOTES:
-
+                // If the incoming values map contains modification date, sets the value to the current time.
+                if (values.containsKey(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE)) {
+                    // Gets the current system time in milliseconds
+                    Long now = Long.valueOf(System.currentTimeMillis());
+                    values.put(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, now);
+                }
                 // Does the update and returns the number of rows updated.
                 count = db.update(
                     NotePad.Notes.TABLE_NAME, // The database table name.
@@ -692,6 +905,12 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
             // If the incoming URI matches a single note ID, does the update based on the incoming
             // data, but modifies the where clause to restrict it to the particular note ID.
             case NOTE_ID:
+                // If the incoming values map contains modification date, sets the value to the current time.
+                if (values.containsKey(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE)) {
+                    // Gets the current system time in milliseconds
+                    Long now = Long.valueOf(System.currentTimeMillis());
+                    values.put(NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, now);
+                }
                 // From the incoming URI, get the note ID
                 String noteId = uri.getPathSegments().get(NotePad.Notes.NOTE_ID_PATH_POSITION);
 
@@ -723,6 +942,63 @@ public class NotePadProvider extends ContentProvider implements PipeDataWriter<C
                                               // null if the values are in the where argument.
                 );
                 break;
+            
+            // If the incoming URI matches the Categories URI pattern
+            case CATEGORIES:
+                count = db.update(
+                    NotePad.Categories.TABLE_NAME,  // The database table name.
+                    values,                        // A map of column names and new values to use.
+                    where,                         // The where clause column names.
+                    whereArgs                      // The where clause column values to select on.
+                );
+                break;
+            
+            // If the incoming URI matches the Category ID URI pattern
+            case CATEGORY_ID:
+                // From the incoming URI, get the category ID
+                String categoryId = uri.getPathSegments().get(1);
+                
+                // Update the category
+                count = db.update(
+                    NotePad.Categories.TABLE_NAME,                // The database table name.
+                    values,                                     // A map of column names and new values to use.
+                    NotePad.Categories._ID + " = " + categoryId,  // The where clause column names and category ID.
+                    whereArgs                                  // The where clause column values to select on.
+                );
+                
+                // If category name or color changed, update all notes with this category
+                if (count > 0) {
+                    // Get updated category information
+                    Cursor cursor = db.query(
+                        NotePad.Categories.TABLE_NAME,
+                        new String[]{NotePad.Categories.COLUMN_NAME_NAME, NotePad.Categories.COLUMN_NAME_COLOR},
+                        NotePad.Categories._ID + " = " + categoryId,
+                        null,
+                        null,
+                        null,
+                        null
+                    );
+                    
+                    if (cursor != null && cursor.moveToFirst()) {
+                        String updatedName = cursor.getString(0);
+                        String updatedColor = cursor.getString(1);
+                        cursor.close();
+                        
+                        // Update all notes with this category
+                        ContentValues noteValues = new ContentValues();
+                        noteValues.put(NotePad.Notes.COLUMN_NAME_CATEGORY, updatedName);
+                        noteValues.put(NotePad.Notes.COLUMN_NAME_CATEGORY_COLOR, updatedColor);
+                        
+                        db.update(
+                            NotePad.Notes.TABLE_NAME,
+                            noteValues,
+                            NotePad.Notes.COLUMN_NAME_CATEGORY + " = ?",
+                            new String[]{updatedName}
+                        );
+                    }
+                }
+                break;
+            
             // If the incoming pattern is invalid, throws an exception.
             default:
                 throw new IllegalArgumentException("Unknown URI " + uri);

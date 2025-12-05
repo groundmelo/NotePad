@@ -122,6 +122,20 @@ public final class NotePad {
          * The default sort order for this table
          */
         public static final String DEFAULT_SORT_ORDER = "modified DESC";
+        
+        /**
+         * Projection for selecting required fields
+         */
+        public static final String[] PROJECTION = new String[] {
+                NotePad.Notes._ID, // 0
+                NotePad.Notes.COLUMN_NAME_TITLE, // 1
+                NotePad.Notes.COLUMN_NAME_NOTE, // 2
+                NotePad.Notes.COLUMN_NAME_CREATE_DATE, // 3
+                NotePad.Notes.COLUMN_NAME_MODIFICATION_DATE, // 4
+                NotePad.Notes.COLUMN_NAME_TODO_STATUS, // 5
+                NotePad.Notes.COLUMN_NAME_CATEGORY, // 6
+                NotePad.Notes.COLUMN_NAME_CATEGORY_COLOR, // 7
+        };
 
         /*
          * Column definitions
@@ -150,5 +164,115 @@ public final class NotePad {
          * <P>Type: INTEGER (long from System.curentTimeMillis())</P>
          */
         public static final String COLUMN_NAME_MODIFICATION_DATE = "modified";
+        
+        /**
+         * Column name for the to-do status
+         * <P>Type: INTEGER (0 for regular note, 1 for pending to-do, 2 for completed to-do)</P>
+         */
+        public static final String COLUMN_NAME_TODO_STATUS = "todo_status";
+        
+        // To-do status constants
+        public static final int TODO_STATUS_NONE = 0;     // Regular note
+        public static final int TODO_STATUS_PENDING = 1;  // Pending to-do
+        public static final int TODO_STATUS_COMPLETED = 2; // Completed to-do
+        
+        /**
+         * 笔记分类
+         * <P>Type: TEXT</P>
+         */
+        public static final String COLUMN_NAME_CATEGORY = "category";
+        
+        /**
+         * 分类颜色
+         * <P>Type: TEXT</P>
+         */
+        public static final String COLUMN_NAME_CATEGORY_COLOR = "category_color";
+    }
+    
+    /**
+     * 分类表定义
+     */
+    public static final class Categories implements BaseColumns {
+        // This class cannot be instantiated
+        private Categories() {}
+
+        /**
+         * The table name offered by this provider
+         */
+        public static final String TABLE_NAME = "categories";
+
+        /*
+         * URI definitions
+         */
+
+        /**
+         * The scheme part for this provider's URI
+         */
+        private static final String SCHEME = "content://";
+
+        /**
+         * Path parts for the URIs
+         */
+
+        /**
+         * Path part for the Categories URI
+         */
+        private static final String PATH_CATEGORIES = "/categories";
+
+        /**
+         * Path part for the Category ID URI
+         */
+        private static final String PATH_CATEGORY_ID = "/categories/";
+
+        /**
+         * 0-relative position of a category ID segment in the path part of a category ID URI
+         */
+        public static final int CATEGORY_ID_PATH_POSITION = 1;
+
+        /**
+         * The content:// style URL for this table
+         */
+        public static final Uri CONTENT_URI = Uri.parse(SCHEME + AUTHORITY + PATH_CATEGORIES);
+
+        /**
+         * The content URI base for a single category. Callers must
+         * append a numeric category id to this Uri to retrieve a category
+         */
+        public static final Uri CONTENT_ID_URI_BASE
+            = Uri.parse(SCHEME + AUTHORITY + PATH_CATEGORY_ID);
+
+        /**
+         * The content URI match pattern for a single category, specified by its ID. Use this to match
+         * incoming URIs or to construct an Intent.
+         */
+        public static final Uri CONTENT_ID_URI_PATTERN
+            = Uri.parse(SCHEME + AUTHORITY + PATH_CATEGORY_ID + "/#");
+
+        /**
+         * The MIME type of {@link #CONTENT_URI} providing a directory of categories.
+         */
+        public static final String CONTENT_TYPE = "vnd.android.cursor.dir/vnd.google.category";
+
+        /**
+         * The MIME type of a {@link #CONTENT_URI} sub-directory of a single category.
+         */
+        public static final String CONTENT_ITEM_TYPE = "vnd.android.cursor.item/vnd.google.category";
+
+        /**
+         * The default sort order for this table
+         */
+        public static final String DEFAULT_SORT_ORDER = "name ASC";
+        
+        /**
+         * 分类名称
+         * <P>Type: TEXT</P>
+         */
+        public static final String COLUMN_NAME_NAME = "name";
+        
+        /**
+         * 分类颜色
+         * <P>Type: TEXT</P>
+         */
+        public static final String COLUMN_NAME_COLOR = "color";
     }
 }

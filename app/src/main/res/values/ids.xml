@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item name="menu_todo" type="id" />
+    <!-- 主题相关ID -->
+    <item type="id" name="menu_background_white" />
+<item type="id" name="menu_background_blue" />
+<item type="id" name="menu_background_yellow" />
+<item type="id" name="menu_background_pink" />
+<item type="id" name="menu_background_green" />
+</resources>

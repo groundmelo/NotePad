@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 深色主题颜色 -->
+    <color name="primary">#64B5F6</color>
+    <color name="primary_dark">#1976D2</color>
+    <color name="accent">#FF80AB</color>
+    <color name="background">#121212</color>
+    <color name="card_background">#1E1E1E</color>
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_primary_dark">#FFFFFF</color>
+    <color name="text_secondary">#B0B0B0</color>
+    <color name="text_secondary_dark">#B0B0B0</color>
+    
+    <!-- 深色主题颜色别名 -->
+    <color name="background_dark_mode">#121212</color>
+    <color name="primary_dark_mode">#64B5F6</color>
+    <color name="primary_dark_dark_mode">#1976D2</color>
+    <color name="accent_dark_mode">#FF80AB</color>
+    
+    <!-- 分类颜色 (深色模式下略微调整) -->
+    <color name="category_default">#90CAF9</color>
+    <color name="category_work">#FFCC80</color>
+    <color name="category_personal">#A5D6A7</color>
+    <color name="category_study">#FFAB91</color>
+    <color name="category_other">#757575</color>
+    <color name="category_shopping">#FFD54F</color>
+    
+    <!-- 待办状态颜色 -->
+    <color name="todo_pending">#B0B0B0</color>
+    <color name="todo_completed">#66BB6A</color>
+</resources>
