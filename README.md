@@ -84,9 +84,9 @@ private final void deleteNote() {
 
 **截图展示**：
 
-![创建笔记](screenshots/创建.png)
-![编辑笔记](screenshots/编辑.jpg)
-![删除笔记](screenshots/删除1.png)
+<img src="screenshots/创建.png" alt="创建笔记" width="30%">
+<img src="screenshots/编辑.jpg" alt="编辑笔记" width="30%">
+<img src="screenshots/删除1.png" alt="删除笔记" width="30%">
 
 ### 2. 时间显示功能
 
@@ -113,7 +113,7 @@ public void bindView(View view, Context context, Cursor cursor) {
 
 **截图展示**：
 
-![时间显示](screenshots/time_display.svg)
+<img src="screenshots/时间戳.png" alt="时间显示" width="30%">
 
 ### 3. 搜索功能
 
@@ -173,6 +173,8 @@ private void refreshNoteList() {
 - 支持按标题和内容搜索
 
 **截图展示**：
+<img src="screenshots/搜索1.png" alt="搜索条件" width="30%">
+<img src="screenshots/搜索2.png" alt="搜索结果" width="30%">
 
 ### 4. 分类管理功能
 
@@ -208,6 +210,8 @@ private void initCategoryFilter() {
 - 选择分类后仅显示该分类下的笔记
 
 **截图展示**：
+<img src="screenshots/分类筛选1.png" alt="筛选条件" width="30%">
+<img src="screenshots/分类筛选2.png" alt="筛选结果" width="30%">
 
 ### 5. 待办事项功能
 
@@ -252,6 +256,8 @@ private void updateTodoIcon() {
 - 已完成的待办事项显示勾选图标
 
 **截图展示**：
+<img src="screenshots/待办1.png" alt="事件待办" width="30%">
+<img src="screenshots/待办2.png" alt="事件已办" width="30%">
 
 ### 5. 个性化主题功能
 
@@ -298,6 +304,10 @@ public class ThemeManager {
 - 主题设置即时生效，无需重启应用
 
 **截图展示**：
+<img src="screenshots/背景颜色1.png" alt="更换背景颜色" width="30%">
+<img src="screenshots/背景颜色2.png" alt="粉色背景" width="30%">
+<img src="screenshots/字体大小1.png" alt="小号字体" width="30%">
+<img src="screenshots/字体大小2.png" alt="大号字体" width="30%">
 
 ### 7. 排序功能
 
@@ -310,7 +320,6 @@ public class ThemeManager {
 
 **核心代码**：
 ```java
-// NotePad 中定义的默认排序顺序
 public static final String DEFAULT_SORT_ORDER = "modified DESC";
 
 // NotesList 中的排序初始化
@@ -357,7 +366,6 @@ private void initSort() {
 
 // 刷新笔记列表
 private void refreshNoteList() {
-    // 执行查询，应用排序顺序
     mCursor = managedQuery(
         getIntent().getData(),
         PROJECTION,
@@ -375,6 +383,9 @@ private void refreshNoteList() {
 - 选择排序方式后，笔记列表即时更新为相应的排序顺序
 
 **截图展示**：
+<img src="screenshots/排序1.png" alt="按修改时间排序" width="30%">
+<img src="screenshots/排序2.png" alt="按分类排序" width="30%">
+<img src="screenshots/排序3.png" alt="按待办状态排序" width="30%">
 
 ## 三. 关键技术细节
 
