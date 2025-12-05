@@ -173,6 +173,7 @@ private void refreshNoteList() {
 - 支持按标题和内容搜索
 
 **截图展示**：
+
 <img src="screenshots/搜索1.png" alt="搜索条件" width="30%">
 <img src="screenshots/搜索2.png" alt="搜索结果" width="30%">
 
@@ -210,6 +211,7 @@ private void initCategoryFilter() {
 - 选择分类后仅显示该分类下的笔记
 
 **截图展示**：
+
 <img src="screenshots/分类筛选1.png" alt="筛选条件" width="30%">
 <img src="screenshots/分类筛选2.png" alt="筛选结果" width="30%">
 
@@ -256,6 +258,7 @@ private void updateTodoIcon() {
 - 已完成的待办事项显示勾选图标
 
 **截图展示**：
+
 <img src="screenshots/待办1.png" alt="事件待办" width="30%">
 <img src="screenshots/待办2.png" alt="事件已办" width="30%">
 
@@ -304,6 +307,7 @@ public class ThemeManager {
 - 主题设置即时生效，无需重启应用
 
 **截图展示**：
+
 <img src="screenshots/背景颜色1.png" alt="更换背景颜色" width="30%">
 <img src="screenshots/背景颜色2.png" alt="粉色背景" width="30%">
 <img src="screenshots/字体大小1.png" alt="小号字体" width="30%">
@@ -383,6 +387,7 @@ private void refreshNoteList() {
 - 选择排序方式后，笔记列表即时更新为相应的排序顺序
 
 **截图展示**：
+
 <img src="screenshots/排序1.png" alt="按修改时间排序" width="30%">
 <img src="screenshots/排序2.png" alt="按分类排序" width="30%">
 <img src="screenshots/排序3.png" alt="按待办状态排序" width="30%">
